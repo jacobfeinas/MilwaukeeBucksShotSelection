@@ -1,0 +1,286 @@
+---
+title: "Milwaukee Bucks Shot Selection: Over the Years"
+author: "Jacob Feinas"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: readable
+    code_folding: hide
+---
+
+## Libraries Used
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(devtools)
+install_github("abresler/nbastatR")
+library(nbastatR)
+library(ggplot2)
+library(ggthemes)
+library(scales)
+library(gganimate)
+library(prettydoc)
+```
+
+```{r, warning = FALSE, message = FALSE, include = FALSE}
+Sys.setenv("VROOM_CONNECTION_SIZE" = 1000000)
+```
+
+```{r, warning = FALSE, message = FALSE, include = FALSE}
+bucksShots03 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2003)
+bucksShots04 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2004)
+bucksShots05 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2005)
+bucksShots06 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2006)
+bucksShots07 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2007)
+bucksShots08 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2008)
+bucksShots09 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2009)
+bucksShots10 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2010)
+bucksShots11 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2011)
+bucksShots12 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2012)
+bucksShots13 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2013)
+bucksShots14 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2014)
+bucksShots15 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2015)
+bucksShots16 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2016)
+bucksShots17 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2017)
+bucksShots18 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2018)
+bucksShots19 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2019)
+bucksShots20 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2020)
+bucksShots21 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2021)
+bucksShots22 <- teams_shots(teams = "Milwaukee Bucks", seasons = 2022)
+```
+
+## Creating Initial Data Frame
+```{r, message = FALSE, warning = FALSE}
+bucksShotsOrig <- rbind(bucksShots03, bucksShots04, bucksShots05, bucksShots06, bucksShots07, bucksShots08, bucksShots09, bucksShots10, bucksShots11, bucksShots12, bucksShots13, bucksShots14, bucksShots15, bucksShots16, bucksShots17, bucksShots18, bucksShots19, bucksShots20, bucksShots21, bucksShots22)
+```
+
+## Creating the Court
+
+The following code was found on GitHub to create the basketball court (https://gist.github.com/edkupfer/6354964)
+```{r, warning = FALSE, message = FALSE}
+fullCourt <- ggplot(data=data.frame(x=1,y=1),aes(x,y))+
+   ###outside box:
+geom_path(data=data.frame(x=c(-25,-25,25,25,-25),y=c(-47,0,0,-47,-47)))+
+   ###halfcourt line:
+geom_path(data=data.frame(x=c(-25,25),y=c(0,0)))+
+   ###halfcourt semicircle:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+   ###solid FT semicircle above FT line:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(28-sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(28-sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+   ###dashed FT semicircle below FT line:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(28+sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y),linetype='dashed')+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(28+sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y),linetype='dashed')+
+   ###key:
+geom_path(data=data.frame(x=c(-8,-8,8,8,-8),y=c(47,28,28,47,47)))+
+geom_path(data=data.frame(x=-c(-8,-8,8,8,-8),y=-c(47,28,28,47,47)))+
+   ###box inside the key:
+geom_path(data=data.frame(x=c(-6,-6,6,6,-6),y=c(47,28,28,47,47)))+
+geom_path(data=data.frame(x=c(-6,-6,6,6,-6),y=-c(47,28,28,47,47)))+
+   ###restricted area semicircle:
+geom_path(data=data.frame(x=c(-4000:(-1)/1000,1:4000/1000),y=c(41.25-sqrt(4^2-c(-4000:(-1)/1000,1:4000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-4000:(-1)/1000,1:4000/1000),y=-c(41.25-sqrt(4^2-c(-4000:(-1)/1000,1:4000/1000)^2))),aes(x=x,y=y))+
+   ###rim:
+geom_path(data=data.frame(x=c(-750:(-1)/1000,1:750/1000,750:1/1000,-1:-750/1000),y=c(c(41.75+sqrt(0.75^2-c(-750:(-1)/1000,1:750/1000)^2)),c(41.75-sqrt(0.75^2-c(750:1/1000,-1:-750/1000)^2)))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-750:(-1)/1000,1:750/1000,750:1/1000,-1:-750/1000),y=-c(c(41.75+sqrt(0.75^2-c(-750:(-1)/1000,1:750/1000)^2)),c(41.75-sqrt(0.75^2-c(750:1/1000,-1:-750/1000)^2)))),aes(x=x,y=y))+
+   ###backboard:
+geom_path(data=data.frame(x=c(-3,3),y=c(43,43)),lineend='butt')+
+geom_path(data=data.frame(x=c(-3,3),y=-c(43,43)),lineend='butt')+
+   ###three-point line:
+geom_path(data=data.frame(x=c(-22,-22,-22000:(-1)/1000,1:22000/1000,22,22),y=c(47,47-169/12,41.75-sqrt(23.75^2-c(-22000:(-1)/1000,1:22000/1000)^2),47-169/12,47)),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-22,-22,-22000:(-1)/1000,1:22000/1000,22,22),y=-c(47,47-169/12,41.75-sqrt(23.75^2-c(-22000:(-1)/1000,1:22000/1000)^2),47-169/12,47)),aes(x=x,y=y))+
+   ###fix aspect ratio to 1:1
+coord_fixed()
+```
+
+## Editing and Rescaling Data
+
+The following code chunk accomplishes the following:
+
+ - Takes the boolean value of whether or not a shot is made and converts it into a 1 if true and 0 if false.
+ 
+ - Groups each shot by year so analysis across years can be done.
+ 
+ - Rescales the x and y locations of the shots attempted so they are in the proper place when overlaid onto the court.
+
+```{r, warning = FALSE, message = FALSE}
+bucksShotsOrig$isShotMade <-  as.integer(as.logical(bucksShotsOrig$isShotMade))
+bucksShots <- bucksShotsOrig %>% group_by(yearSeason)
+
+bucksShots$locationX <- rescale(bucksShots$locationX, to = c(-25, 25))
+bucksShots$locationY <- rescale(bucksShots$locationY, to = c(-47, 47))
+```
+
+## Shot Map Creation
+
+This creates a plot of the shot locations and overlays it onto the court created above. Then, the animation is created to dynamically show the shot selection by year.
+
+```{r, warning = FALSE, message = FALSE}
+courtShots <- fullCourt + 
+  geom_point(aes(x = locationX, y = locationY, color = typeEvent), data = bucksShots, alpha=0.4, legend = FALSE) + 
+  labs(title = "Milwaukee Bucks Shot Chart: {frame_time}", x = "",y = "", color = "Shot Outcome" ) + 
+  scale_color_manual(values=c("Made Shot"="#0077C0", "Missed Shot"="#00471B")) +
+  theme_clean() + 
+  geom_point(aes(x=-25, y=50, color = typeEvent), data = bucksShots) +
+  transition_time(yearSeason) + 
+  enter_fade() + 
+  exit_shrink() + 
+  labs(title = "Milwaukee Bucks Shot Chart: {as.integer(frame_time)}", x = "", y = "", color = "Shot Outcome") + 
+  ylim(-47,0)
+
+shotsByYearsAni <- animate(courtShots, nframes = 20, fps = 0.5)
+```
+
+## Creating Summary Data Frames
+
+The summaries created here are used in the next code chunk for creating graphs to show trend changes over years.
+
+```{r, warning = FALSE, message = FALSE}
+bucksShotsTotal <- bucksShotsOrig %>%
+  group_by(yearSeason) %>%
+  summarise(sum(isShotAttempted))
+
+bucksShotsMade <- bucksShotsOrig %>%
+  group_by(yearSeason) %>%
+  summarise(sum(isShotMade)/sum(isShotAttempted)) %>%
+  left_join(bucksShotsTotal, by = "yearSeason")
+
+bucksShots2 <- bucksShotsOrig %>% 
+  dplyr::mutate(twoPoint = ifelse(bucksShotsOrig$typeShot == "2PT Field Goal", 1, 0)) %>%
+  dplyr::mutate(threePoint = ifelse(bucksShotsOrig$typeShot == "3PT Field Goal", 1, 0))
+
+bucksShots2sCount <- bucksShots2 %>% 
+  group_by(yearSeason) %>% 
+  summarise(sum(twoPoint))
+
+bucksShots3sCount <- bucksShots2 %>% 
+  group_by(yearSeason) %>% 
+  summarise(sum(threePoint))
+
+bucksShots2s <- bucksShotsOrig %>%
+  dplyr::mutate(twoPoint = ifelse(bucksShotsOrig$typeShot == "2PT Field Goal", 1, 0)) %>%
+  dplyr::mutate(twoPointMade = ifelse(bucksShotsOrig$typeShot == "2PT Field Goal" & bucksShotsOrig$isShotMade == '1', 1, 0)) %>% 
+  group_by(yearSeason) %>%
+  summarise(sum(twoPointMade)/sum(twoPoint)) %>%
+  left_join(bucksShots2sCount, by = "yearSeason")
+
+bucksShots3s <- bucksShotsOrig %>%
+  dplyr::mutate(threePoint = ifelse(bucksShotsOrig$typeShot == "3PT Field Goal", 1, 0)) %>%
+  dplyr::mutate(threePointMade = ifelse(bucksShotsOrig$typeShot == "3PT Field Goal" & bucksShotsOrig$isShotMade == '1', 1, 0)) %>% 
+  group_by(yearSeason) %>%
+  summarise(sum(threePointMade)/sum(threePoint)) %>%
+  left_join(bucksShots3sCount, by = "yearSeason")
+
+bucksShotsByType <- left_join(bucksShots2s, bucksShots3s, by = "yearSeason") %>%
+  rename("Two Point Percentage" = "sum(twoPointMade)/sum(twoPoint)", "Two Point Shots Attempted" = "sum(twoPoint)", "Three Point Percentage" = "sum(threePointMade)/sum(threePoint)", "Three Point Shots Attempted" = "sum(threePoint)")
+```
+
+## Plot Creation
+
+Four plots are created here. The first two are the shot counts by year and the field goal percentage by year. The second two are the expected value of each shot (one at full scale and the second zoomed in to see clearer overall trends) which is used as a type of "risk/reward" metric.
+
+```{r}
+bucksShotsByTypePivot <- bucksShotsByType %>% 
+  pivot_longer(cols=c(`Two Point Percentage`, `Three Point Percentage`), names_to = "Shot Type", values_to = "Percentage")
+
+shotsPerc <- ggplot() + 
+  geom_col(data = bucksShotsByTypePivot, aes(x = yearSeason, y = Percentage, fill = `Shot Type`), position = "identity") + 
+  theme_clean() + 
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1, size = 8), plot.title = element_text(hjust = 0.5)) + 
+  scale_x_continuous("Year", labels = as.character( bucksShotsByTypePivot$yearSeason ), breaks = bucksShotsByTypePivot$yearSeason) +
+  scale_fill_manual(values=c("#00471B", "#0077C0"), labels=c('Three Point\nPercentage', 'Two Point\nPercentage')) + 
+  guides(fill = guide_legend(byrow = TRUE)) + 
+  labs(title = "Percentage of Shots Made Per Year", y = "Percentage (%)")
+
+bucksShotsByTypePivot2 <- bucksShotsByType %>% 
+  pivot_longer(cols=c(`Two Point Shots Attempted`, `Three Point Shots Attempted`), names_to = "Shot Type", values_to = "Count")
+
+shotsCount <- ggplot() + 
+  geom_col(data = bucksShotsByTypePivot2, aes(x = yearSeason, y = Count, fill = `Shot Type`), position = "identity") + 
+  theme_clean() + 
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1, size = 8), plot.title = element_text(hjust = 0.5)) + 
+  scale_x_continuous("Year", labels = as.character( bucksShotsByTypePivot2$yearSeason), breaks = bucksShotsByTypePivot2$yearSeason) +
+  scale_fill_manual(values=c("#00471B", "#0077C0"), labels=c('Three Point\nAttempts', 'Two Point\nAttempts')) + 
+  guides(fill = guide_legend(byrow = TRUE)) + 
+  labs(title = "Number of Shots Per Year", y = "Count")
+
+exVals <- bucksShotsByType %>% dplyr::mutate(`Expected Value 2` = `Two Point Percentage`*2) %>% dplyr::mutate(`Expected Value 3` = `Three Point Percentage`*3)
+
+bucksShotsByTypePivot3 <- exVals %>% 
+  pivot_longer(cols=c(`Expected Value 2`, `Expected Value 3`), names_to = "Shot Type Average", values_to = "Value")
+
+exValPlot <- ggplot() + 
+  geom_col(data = bucksShotsByTypePivot3, aes(x = yearSeason, y = Value, fill = `Shot Type Average`), position = position_dodge()) + 
+  theme_clean() + 
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1, size = 8), plot.title = element_text(hjust = 0.5)) + 
+  scale_x_continuous("Year", labels = as.character( bucksShotsByTypePivot3$yearSeason), breaks = bucksShotsByTypePivot3$yearSeason) +
+  scale_fill_manual(values=c("#00471B", "#0077C0"), labels=c('Average Points\nPer Attempt (2)', 'Average Points\nPer Attempt (3)')) + 
+  guides(fill = guide_legend(byrow = TRUE)) + 
+  labs(title = "Expected Value Based on Shot Type", y = "Expected Value")
+
+exValPlotZoom <- exValPlot + coord_cartesian(ylim=c(0.9,1.2)) + labs(title = "Expected Value Based on Shot Type (Zoomed)")
+```
+
+## Report for the Front Office
+
+  - The year to year trend shows an average increase in total field goals attempted, with a sharp increase in total 3 point field goals attempted since 2017.
+  
+  - Overall, field goal percentage has increased. Two point percentage has increase over the years, while three point percentage has remained constant.
+  
+  - Generally, the risk of shooting a lower percentage three point shot is worth the reward due to the higher relative value when comparing the value of the point to the probability of making the shot.
+  
+  - Important Note: There is some abnormality with the 2019-20 and 2020-21 seasons due to the COVID-19 Pandemic.
+
+## Visuals {.tabset}
+
+### Shot Map
+
+This animation shows the shot map year by year. A trend that I notice is the distance between a 3 point shot and a shot just inside of the arc becomes grows and becomes more sparse as the years progress. Additionally, the density of 3 point shot attempts increases as the years progress, with a noticeable increase starting in 2017. 
+
+```{r}
+shotsByYearsAni
+```
+
+### Shot Count
+
+This shows the shot count by year. While knowing the total amount of shots taken regardless of type of shot is not by itself very useful, understanding the breakdown of what type of shot is attempted and how often is. We can see that from year to year, the general trend shows a decrease in two point field goals and an increase in three point field goals.
+
+```{r}
+shotsCount
+```
+
+### Shooting Percentage
+
+The number of shots per year is important, but by itself it doesn't help us improve performance. Knowing how many of those shots result in points lets us know the general trend of scoring. We can see that the team's two point percentage is increasing while the three point percentage remains fairly constant. Knowing this information, along with the dramatic uptick in three point field goals attempted in recent years, lends itself to a deeper analysis of the risk/reward ratio of shot selection.
+
+```{r}
+shotsPerc
+```
+
+### Shot Value
+
+The following plot looks at the expected value of the shot taken. This was calculated by multiplying the yearly field goal percentage by the value of the shot. This results in a value that I substitute for a "risk/reward" metric. Is the risk of a lower probability of scoring worth the reward for an additional point? This graph tells us yes for all years except two (2018-19 and 2019-20).
+
+```{r}
+exValPlot
+```
+
+### Shot Value Zoomed
+
+This graph truncates the start of the y-axis of the previous graph to around 0.9 in order to see the trends a little more clearly.
+
+```{r}
+exValPlotZoom
+```
+
+## Lingering Questions
+
+  - How much of an impact did the COVID-19 pandemic have on these metrics?
+  
+  - Is the recent uptick in three point field goals a byproduct of the success of the Golden State Warriors and Steph Curry, Klay Thompson, etc.?
+  
+  - Why is there an increase in two point field goal expected value in recent years?
+  
+  - Is there a desperation aspect to the types of shots attempted depending on time left in the game/time remain in the season?
+  
+  - Do certain coaching hires reflect a change in shooting habits based on that coaches game philosophy?
